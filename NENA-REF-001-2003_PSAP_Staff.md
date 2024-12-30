@@ -1,0 +1,3 @@
+# NENA-REF-001-2003_PSAP_Staff
+This is the NENA staffing model reference document. It was created by 2 consulting firms working in collaboration. I had noticed, during my Ph.D. research that this model uses an Erlang algorithm to address the staffing needs. As an interim possibility, using [Thomas R Robbins](https://myweb.ecu.edu/ROBBINST/) as a guide, I could, in theory, implement an Erlang-C and an Erlang-A model and then find a model that could weight the recommendations to create a stopgap. I don't like it, but it's quick and dirty and buys me some time to convince NENA and the FutureThink group that we could do this ourselves. 
+
