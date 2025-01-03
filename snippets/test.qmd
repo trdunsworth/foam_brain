@@ -1,0 +1,12 @@
+---
+title: "Preview Document"
+format:
+    html:
+        toc: true
+        toc-title: "Contents"
+        number-sections: true
+        highlight-style: arrow
+execute:
+    echo: false
+engine: knitr
+---
