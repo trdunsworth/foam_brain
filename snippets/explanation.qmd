@@ -547,53 +547,7 @@ barRecd
 
 Please note that Phone and Cell Phone do not distinguish if those calls come in on 911 trunk lines or if they came in on Admin lines. My presumption, based on what we see from Rapid Analytics and ECaTS is that these represent calls for service on administrative lines, but I cannot guarantee the accuracy of that presumption. 
 
-We can also look at the count of calls coming in for each service. We already know that we have more calls for APD than for AFD for both Fire and EMS calls. However, it is good to see how those come out. 
-
-```{r agecny-barplot}
-barAgency <- wk50 %>% ggplot(aes(x = Agency, fill = Agency)) +
-  geom_bar() +
-  scale_fill_viridis(discrete = TRUE, option = "E") +
-  ggtitle("Count of Calls by Agency Served") +
-  geom_text(
-    stat = 'count',
-    aes(label = after_stat(count)),
-    vjust = -0.5
-  )
-
-barAgency
-```
-
-As expected, calls for APD far outpace the calls for AFD. Combining Fire and EMS calls for service, there is still a greater than 2:1 ratio APD to AFD. 
-
-We can also look at the distribution of calls by Shift (I think that I have the shifts correct by day right now, if I don't then it is easy to reverse them.) and by closing status; how many have reports, etc. I'm going to run both blocks of code one after the other and then we will move along to other things that we can look at in the data. I'm sure you're noticing the length. This is a kitchen-sink style report to give previewers something to think about to determine what might be included in a final template. 
-
-```{r other-barplots}
-barShift <- wk50 %>% ggplot(aes(x = Shift, fill = Shift)) +
-  geom_bar() +
-  scale_fill_viridis(discrete = TRUE, option = "E") +
-  ggtitle("Count of Calls by Shift") +
-  geom_text(
-    stat = 'count',
-    aes(label = after_stat(count)),
-    vjust = -0.5
-  )
-
-barShift
-
-barClose <- wk50 %>% ggplot(aes(x = Call_Disposition, fill = Call_Disposition)) +
-    geom_bar() +
-    scale_fill_viridis(discrete = TRUE, option = "E") + 
-    geom_text(
-        stat = 'count',
-        aes(label = after_stat(count)),
-        vjust = -0.5
-    ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-barClose
-```
-
-The most interesting take-aways from this is that while the largest disposition was 'No Report', no disposition is a close second. This implies that while calls are getting closed, we don't know any final status, other than they are closed. This may be something that we wish to track and investigate in the future. The shift information is not surprising since I believe that Shifts A and C worked 4 days in the week period (Sunday through Saturday).
+[[2025-01-08]]
 
 The next code and graph are an experiment. The plot is called a Ridgeline Plot and it's designed to show the same information across different categories so you're not overlapping a bunch of data and making a muddled graph. In this case, this plot will look at the count of calls per hour, per day of the week. 
 
