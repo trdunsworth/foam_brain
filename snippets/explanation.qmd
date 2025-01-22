@@ -3,7 +3,7 @@ title: "Explanations"
 author: "Tony Dunsworth"
 format:
   html:
-    fig-width: 9
+    fig-width: 10
     fig-height: 7
 engine: knitr
 ---
