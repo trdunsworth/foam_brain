@@ -1,5 +1,7 @@
 # R Links
 
+[Big Book of R](https://www.bigbookofr.com/)
+
 ## ggplot2 Links
 
 [Geom Encyclopedia](https://thiyangt.github.io/geom.encyclopedia/)
@@ -13,6 +15,8 @@
 [ggplot2 tutorial](https://www.cedricscherer.com/2019/08/05/a-ggplot2-tutorial-for-beautiful-plotting-in-r/)
 [ggplot2 complete tutorial](http://r-statistics.co/Complete-Ggplot2-Tutorial-Part1-With-R-Code.html)
 [ggplot2-tutorial](https://github.com/jennybc/ggplot2-tutorial)
+[Modern Data Visualization with R](https://rkabacoff.github.io/datavis/)
+[R Graphics Cookbook](https://r-graphics.org/)
 
 ## R Studio Links
 
