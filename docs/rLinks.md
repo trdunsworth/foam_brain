@@ -1,9 +1,12 @@
 # R Links
 
 [Big Book of R](https://www.bigbookofr.com/)
+[Coding Club R Style Guide](https://ourcodingclub.github.io/tutorials/etiquette/)
+[Tidyverse Style Guide](https://style.tidyverse.org/)
 
 ## ggplot2 Links
 
+[ggplot2](https://ggplot2-book.org/)
 [Geom Encyclopedia](https://thiyangt.github.io/geom.encyclopedia/)
 [Awesome ggplot2](https://pawan1198.github.io/)
 [Awesome more updates](https://github.com/erikgahner/awesome-ggplot2)
