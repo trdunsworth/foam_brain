@@ -1,0 +1,47 @@
+---
+title: "How to Start - Asking the First Question"
+author: "Tony Dunsworth, Ph.D."
+date: "2025-04-12"
+categories: [examples, analyses]
+execute: 
+  eval: false
+---
+
+I recently wrote about a presentation that I gave at [Randolph Macon College](https://rmc.edu) concerning using data analyses in 9-1-1 centres. During the Q&A section, someone asked me how I would recommend getting started. My answer, then and now, is pick a question and dive into that and new questions will start coming. 
+
+I thought, perhaps, I should come up with an example of what I mean. In our centre, our medical director has requested that we do quality checks on every cardiac arrest call that we receive. So, here is the starting question: what can we learn about the cardiac arrest calls in the city? With that as the opening question, the first step is collecting the data. To start, I plan on collecting four datasets. I can create all of them using SQL. Since I work on SQL Server or T-SQL flavoured databases, the query, for our dispatch software's databases looks something like this:
+
+```{sql}
+USE Reporting_System;
+GO
+
+DECLARE @time1 DATETIME2;
+
+SET @time1 '2025-01-01';
+
+-- This query will retrieve all cardiac arrest calls from this year
+
+SELECT Master_Incident_Number,
+  Response_Date,
+  Address,
+  Time_CallEnteredQueue,
+  Time_First_Unit_Assigned,
+  Time_Phone_Release
+FROM Response_Master_Incident
+WHERE Response_Date > @time1
+AND  Problem = 'CARDIAC ARREST'
+ORDER BY Response_Date;
+
+-- This query will retrieve  all cardiac arrest calls from the past 1, 3, & 5 years
+
+SELECT Master_Incident_Number,
+  Response_Date,
+  Address,
+  Time_CallEnteredQueue,
+  Time_First_Unit_Assigned,
+  Time_Phone_Release
+FROM Response_Master_Incident
+WHERE Response_Date BETWEEN DATEADD(YEAR, -1, @time1) AND @time1
+AND  Problem = 'CARDIAC ARREST'
+ORDER BY Response_Date;
+```
