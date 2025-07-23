@@ -9,7 +9,7 @@ generators = {
     "Name": lambda: person.full_name(),
     "Email": lambda: person.email(),
     "Address": lambda: address.address(),
-    "Phone Number" lambda: person.telephone(),
+    "Phone Number": lambda: person.telephone(),
     "Job": lambda: person.occupation(),
 }
 
