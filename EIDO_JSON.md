@@ -121,3 +121,14 @@ This is a good starting point to determine what you share, with whom, and when y
 - Policy Store
 - What is meant by Caution and Important Information?
 
+### Current State
+
+Currently reviewing the style editor comments. There are no major changes anticipated.
+
+Charter revision to the EIDO Management WG to change to a Reference document
+
+EIDO-IDX working group is updating the EIDO FAQs and making progress.
+
+## What are we missing?
+
+Join our working groups to make a difference.
