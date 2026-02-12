@@ -1,0 +1,151 @@
+#+TITLE: My Emacs Config
+
+* Package Setup
+  #+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                           ("gnu"   . "https://elpa.gnu.org/packages/")))
+  (package-initialize)
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+  (require 'use-package)
+  (setq use-package-always-ensure t)
+  #+END_SRC
+
+* Theme
+  #+BEGIN_SRC emacs-lisp
+  (use-package doom-themes
+    :ensure t
+    :config
+    (load-theme 'doom-one t))
+  #+END_SRC
+
+* Fun Commands
+Let's have some fun.
+
+#+begin_src emacs-lisp
+(defun insert-random-joke ()
+  "Insert a random joke from icanhazdadjoke.com at point."
+  (interactive)
+  (let ((url-request-extra-headers '(("Accept" . "text/plain"))))
+    (with-current-buffer (url-retrieve-synchronously "https://icanhazdadjoke.com/")
+      (goto-char (point-min))
+      (re-search-forward "^$" nil 'move)
+      (forward-char)
+      (let ((joke (buffer-substring-no-properties (point) (point-max))))
+        (delete-region (point-min) (point-max))
+        (insert joke)))))
+(global-set-key (kbd "C-c j") #'insert-random-joke)
+#+end_src
+
+* Smarter Help System
+
+#+begin_src emacs-lisp
+(use-package which-key
+  :config
+  (which-key-mode))
+#+end_src
+
+* Better Completion and Search
+
+#+begin_src emacs-lisp
+(use-package ivy
+  :config
+  (ivy-mode 1))
+
+(use-package counsel
+  :after ivy
+  :config (counsel-mode))
+
+  (use-package swiper
+    :ensure try
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (global-set-key "\C-s" 'swiper)
+      (global-set-key (kbd "C-c C-r") 'ivy-resume)
+      (global-set-key (kbd "<f6>") 'ivy-resume)
+      (global-set-key (kbd "M-x") 'counsel-M-x)
+      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+      (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+      (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+      (global-set-key (kbd "<f1> l") 'counsel-load-library)
+      (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+      (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+      (global-set-key (kbd "C-c g") 'counsel-git)
+      (global-set-key (kbd "C-c j") 'counsel-git-grep)
+      (global-set-key (kbd "C-c k") 'counsel-ag)
+      (global-set-key (kbd "C-x l") 'counsel-locate)
+      (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+      (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)))
+#+end_src
+
+* Theme
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :config
+  (load-theme 'doom-tomorrow-day t))
+#+end_src
+
+* Custom Keybindings
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-s") 'swiper) ;; Search in file
+(global-set-key (kbd "C-x b") 'ivy-switch-buffer) ;; Switch buffer better
+(global-set-key (kbd "M-x") 'counsel-M-x) ;; Better M-x
+(global-set-key (kbd "C-x C-f") 'counsel-find-file) ;; Better file open
+#+end_src
+
+* Pomodoro Setup
+
+#+begin_src emacs-lisp
+(use-package org-pomodoro
+  :after org
+  :bind ("<f12>" . org-pomodoro)
+  :hook (org-pomodoro-finished . org-agenda-list)
+  :init
+  (setq org-pomodoro-length 25
+        org-pomodoro-short-break-length 5
+        org-pomodoro-long-break-length 15
+        org-pomodoro-long-break-frequency 4)
+
+  ;; Uncomment these lines if you have the sound files
+  ;; (setq org-pomodoro-start-sound (expand-file-name "start.wav" user-emacs-directory)
+  ;;       org-pomodoro-finished-sound (expand-file-name "done.wav" user-emacs-directory)
+  ;;       org-pomodoro-break-sound (expand-file-name "break.wav" user-emacs-directory))
+)
+#+end_src
+
+* Git Integration
+
+#+begin_src emacs-lisp
+(use-package magit)
+(global-set-key (kbd "C-x g") 'magit-status)
+#+end_src
+
+* Python Support
+
+#+begin_src emacs-lisp
+(use-package python
+  :ensure nil
+  :hook (python-mode . eglot-ensure))
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1))
+#+end_src
+
+#+begin_src emacs-lisp
+(setenv "WORKON_HOME" "~/.virtualenvs")
+(pyvenv-workon "my-env")
+#+end_src
+
+* R Support
+
+#+begin_src emacs-lisp
+(use-package ess
+  :init
+  (require 'ess-site))
+#+end_src
