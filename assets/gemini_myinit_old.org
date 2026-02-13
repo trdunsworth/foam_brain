@@ -1,0 +1,156 @@
+* Core UI/UX
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :config (load-theme 'doom-tomorrow-day t))
+
+(use-package all-the-icons :if (display-graphic-p))
+
+(use-package ivy
+  :diminish
+  :config (ivy-mode 1))
+
+(use-package counsel
+  :after ivy
+  :config (counsel-mode 1))
+
+(use-package which-key
+  :config (which-key-mode))
+#+end_src
+
+* Modern Language Support
+#+begin_src emacs-lisp
+;; Setup Tree-sitter languages
+(setq treesit-language-source-alist
+      '((cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+        (python "https://github.com/tree-sitter/tree-sitter-python")
+        (rust "https://github.com/tree-sitter/tree-sitter-rust")
+        (julia "https://github.com/tree-sitter/tree-sitter-julia")
+        (typescript "https://github.com/tree-sitter/tree-sitter-typescript")
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+        (sql "https://github.com/tree-sitter/tree-sitter-sql")))
+
+;; Global LSP (Eglot) settings
+(use-package eglot
+  :hook ((python-mode . eglot-ensure)
+         (typescript-mode . eglot-ensure)
+         (js-mode . eglot-ensure)
+         (julia-mode . eglot-ensure))
+  :config
+  (add-to-list 'eglot-server-programs '(julia-mode . ("julia" "--startup-file=no" "--history-file=no" "-e" "using LanguageServer; runserver()"))))
+#+end_src
+
+* Data Science Suite
+** R Support (ESS)
+#+begin_src emacs-lisp
+(use-package ess
+  :ensure t
+  :init (require 'ess-site)
+  :config
+  (setq ess-use-flymake nil
+        ess-eval-visibly-p nil))
+#+end_src
+
+** Julia Support
+#+begin_src emacs-lisp
+(use-package julia-mode)
+(use-package julia-snail
+  :after julia-mode
+  :hook (julia-mode . julia-snail-mode))
+#+end_src
+
+** Quarto & Markdown
+#+begin_src emacs-lisp
+(use-package quarto-mode
+  :mode (("\\.qmd\\'" . quarto-mode)))
+
+(use-package poly-R
+  :ensure t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.[rR]md\\'" . poly-gfm+r-mode)))
+#+end_src
+
+** SQL Support
+#+begin_src emacs-lisp
+(use-package sql-indent
+  :hook (sql-mode . sqlind-minor-mode))
+#+end_src
+
+* AI Assistants
+** Ollama (Local LLMs)
+#+begin_src emacs-lisp
+(use-package gptel
+  :config
+  (setq gptel-backend (gptel-make-ollama "Ollama"
+                         :host "localhost:11434"
+                         :stream t
+                         :models '("llama3" "mistral"))))
+#+end_src
+
+** GitHub Copilot
+#+begin_src emacs-lisp
+;; Note: requires manual install of copilot.el from github.com/copilot-emacs/copilot.el
+(use-package copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion)
+              ("TAB" . 'copilot-accept-completion)))
+#+end_src
+
+* Jupyter Integration
+#+begin_src emacs-lisp
+(use-package jupyter
+  :after org)
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (jupyter . t)
+   (R . t)
+   (julia . t)))
+#+end_src
+
+* Jupyter Integration
+#+begin_src emacs-lisp
+(use-package jupyter
+  :after org)
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (jupyter . t)
+   (R . t)
+   (julia . t)))
+#+end_src
+
+* SQL Research Databases
+#+begin_src emacs-lisp
+(use-package sql
+  :config
+  (setq sql-connection-alist
+        '((prod-db (sql-product 'postgres)
+                   (sql-user "research_admin")
+                   (sql-server "localhost")
+                   (sql-database "research_data")
+                   (sql-port 5432))
+          (dev-db  (sql-product 'sqlite)
+                   (sql-database "~/research/data/test.db"))))
+  
+  (defun my-sql-connect (product connection)
+    (interactive
+     (let ((connection (completing-read "Connection: " (mapcar #'car sql-connection-alist))))
+       (list 'postgres (intern connection))))
+    (sql-connect connection)))
+#+end_src
+
+* Research Publishing
+#+begin_src emacs-lisp
+(defun my/publish-research-site ()
+  "Stage all changes, commit with a timestamp, and push to GitHub."
+  (interactive)
+  (magit-stage-modified)
+  (magit-commit-create `("-m" ,(format "Research Update: %s" (current-time-string))))
+  (magit-push-current-to-upstream nil)
+  (message "Research pushed to GitHub!"))
+
+(global-set-key (kbd "C-c G p") 'my/publish-research-site)
+#+end_src

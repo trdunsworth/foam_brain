@@ -1,0 +1,103 @@
+* Core Setup
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :config (load-theme 'doom-one t)) ;; Consistently using doom-one [cite: 203]
+
+(use-package vertico
+  :init (vertico-mode))
+
+(use-package orderless
+  :custom (completion-styles '(orderless basic)))
+
+(use-package marginalia
+  :init (marginalia-mode))
+
+(use-package which-key
+  :config (which-key-mode)) [cite: 204]
+#+end_src
+
+* Data Science Suite
+** R & ESS (Preserving your custom functions)
+#+begin_src emacs-lisp
+(use-package ess
+  :hook (ess-mode . (lambda ()
+                     (local-set-key (kbd "C-c t") 'send-section-to-R))) [cite: 217]
+  :config
+  (setq ess-use-flymake nil [cite: 218]
+        ess-eval-visibly-p nil))
+#+end_src
+
+** Quarto & Markdown
+#+begin_src emacs-lisp
+(use-package quarto-mode
+  :mode (("\\.qmd\\'" . quarto-mode)))
+
+(use-package poly-R
+  :config
+  (add-to-list 'auto-mode-alist '("\\.[rR]md\\'" . poly-gfm+r-mode))) [cite: 244]
+#+end_src
+
+** Jupyter & Org-Babel
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (R . t)
+   (jupyter . t)
+   (julia . t))) [cite: 300]
+#+end_src
+
+* GitHub Command Center
+#+begin_src emacs-lisp
+(use-package magit
+  :bind ("C-x g" . magit-status)) [cite: 210]
+
+(use-package forge
+  :after magit)
+
+(defun my/quarto-publish-github ()
+  "Render Quarto and push to GitHub."
+  (interactive)
+  (shell-command (concat "quarto render " (buffer-file-name)))
+  (magit-stage-modified)
+  (magit-commit-create '("-m" "Update Research Site"))
+  (magit-push-current-to-upstream nil))
+#+end_src
+
+* AI Assistants
+** Ollama (Local LLM)
+#+begin_src emacs-lisp
+(use-package gptel
+  :config
+  (setq gptel-backend (gptel-make-ollama "Ollama"
+                         :host "localhost:11434"
+                         :stream t
+                         :models '("llama3" "mistral"))))
+#+end_src
+
+** GitHub Copilot
+#+begin_src emacs-lisp
+(use-package copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion)))
+#+end_src
+
+* Utilities
+** Backups [cite: 301-305]
+#+begin_src emacs-lisp
+(setq backup-directory-alist `((".*" . ,(expand-file-name "~/.emacs.d/backups/")))
+      backup-by-copying t
+      version-control t
+      kept-new-versions 6
+      delete-old-versions t)
+#+end_src
+
+** Pomodoro 
+#+begin_src emacs-lisp
+(use-package org-pomodoro
+  :bind ("<f12>" . org-pomodoro)
+  :config
+  (setq org-pomodoro-length 25))
+#+end_src
+

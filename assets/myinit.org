@@ -146,6 +146,263 @@ Let's have some fun.
 
 #+begin_src emacs-lisp
 (use-package ess
+  :ensure t
+  :hook
+  (ess-mode-hook . (lambda ()
+                     (outline-minor-mode)
+                     (setq outline-regexp "^#.*----")
+                     (defun outline-level ()
+                       (cond (looking-at "^#.*----") 1)
+                       (t 1000))
+                     (defun send-section-to-R ()
+                       (interactive ())
+                       (let ((beg))
+                         (if (outline-on-heading-p)
+                             (beginning-of-line)
+                             (outline-previous-visible-heading 1))
+                         (setq beg (point))
+                         (set-mark (point))
+                         (outline-next-visible-heading 1)
+                         (previous-line 1)
+                         (end-of-line 1)
+                         (ess-eval-region-or-function-or-paragraph-and-step)))
+                      (local-set-key (kbd "C-c h") 'outline-hide-body)
+                      (local-set-key (kbd "C-c s") 'outline-show-all)
+                      (local-set-key (kbd "C-c <left>") 'outline-hide-entry)
+                      (local-set-key (kbd "C-c <right>") 'outline-show-entry)
+                      (local-set-key (kbd "C-c <up>") 'outline-previous-heading)
+                      (local-set-key (kbd "C-c <down>") 'outline-next-heading)
+                      (local-set-key (kbd "C-c t") 'send-section-to-R)))
   :init
-  (require 'ess-site))
+  ;; (require 'ess-site)
+  (setq ess-use-flymake nil)
+  (setq ess-eval-visibly-p nil)
+  (setq ess-use-eldoc nil)
+
+
+  ;; use company for autocomplete
+  ;; (ess-toggle-underscore nil)
+  (setq ess-smart-S-assign nil)
+
+  (setq ess-use-company t)
+  ;; (setq ess-use-auto-complete t)
+
+
+  ;;;;;;; How to connect to R which is in a conda environment:
+  ;; start shell in emacs by `M-x shell`
+  ;; (ssh into your cluster) and start R program
+  ;; e.g. conda activate myenv R --grid_mem=50g
+  ;; call then `M-x ess-remote` and follow the prompts to connect ESS to the
+  ;; remote process
+
+
+  ;; tab completion in R script files
+  ;; https://emacs.stackexchange.com/questions/14785/auto-complete-file-path-on-ess-r-mode
+  ;; https://stat.ethz.ch/pipermail/ess-help/2013-March/008719.html
+  ;; it requires auto-complete package initialization
+  ;; (setq ess-tab-complete-in-script t)
+
+  (setq ess-use-auto-complete t)
+
+  ;; r-mode or ess-mode for files ending with
+  (add-to-list 'auto-mode-alist '("\\.R\\'" . r-mode))
+  (add-to-list 'auto-mode-alist '("\\.r\\'" . r-mode)))
+
+;; | Switch to buffer runnng R    | C-c C-z          |
+;; | evaluate code pieces         | C-c C-n, C-c C-r |
+;; | evaluate line/expression     | C-c C-c          |
+;; | interface to R documentation | C-c C-v          |
+;; | help                         | ess-help, C-h h  |
+
+;; | Create R session             | M-x R            |
+
+;; | ess-eval-buffer                                   | C-c C-b |
+;; | ess-eval-region-or-function-or-paragraph-and-step | C-c C-c |
+;; | ess-eval-function                                 | C-c C-f |
+;; | ess-eval-line-visibly-and-step                    | C-c C-n |
+;; | ess-eval-paragraph-and-step                       | C-c C-p |
+;; | ess-quit                                          | C-c C-q |
+;; | ess-eval-region                                   | C-c C-r |
+;; | ess-display-help-on-object                        | C-c C-v |
+;; | ess-show-traceback                                | C-c `   |
+;; | ess-eval-buffer-from-here-to-end                  | C-c
+
+;; C-h v exec-path ;; to give R path
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; RMarkdown support
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; https://plantarum.ca/2021/10/03/emacs-tutorial-rmarkdown/
+
+;; ;; necesary:
+;; install.packages("rmarkdown")
+;; install.packages("bookdown")
+
+;; markdown mode
+;; ess
+;; poly-R (polymode) ;; supports .Rnw format - LaTeX with R code
+
+
+(use-package markdown-mode
+  :ensure t)
+
+(use-package poly-R
+  :ensure t
+  :config
+  ;; associate new polymode to Rmd files
+  (add-to-list 'auto-mode-alist '("\\.[rR]md\\'" . poly-gfm+r-mode))
+  ;; use braces around code block language strings:
+  (setq markdown-code-block-braces t)
+  ;; set asymetric header `M-x customize-variable mardkdown-asymmetric-header`
+  (setq markdwon-asymettric-header t))
+
+;; RMarkdown
+
+;; | insert heading at same level like previous  | C-c C-s h            |
+;; | insert heading at the specified level       | C-c C-s {1-9}        |
+;; | move headings and their content up down     | C-c <up>/<down>      |
+;; | promote or demote a heading                 | C-c <left>/<right>   |
+;; | insert level1 === or level2 header          | C-c C-s !/@          |  
+
+;; | move to previous/next heading               | C-c C-p/n            |
+;; | move forward/backward to same-level heading | C-c C-f/b            |
+;; | move up to parent heading                   | C-c C-u              |
+
+;; | toggle levels of heading visibility         | <TAB> multiple       |
+
+;; | insert link (url, then link text)           | C-c C-l              |
+
+;; | open link from emacs                        | C-c C-o              |
+;; | insert images (url/local path, then text)   | C-c <TAB> or C-c C-i |
+;; | image text: ![Caption](url)                 |                      |
+;; | toggle display image in buffer              | C-c C-x C-i          |
+
+
+;; | inser table                                 | C-c C-s t nrow ncol  |
+;; | cursor next cell                            | <TAB> or Shift-TAB   |
+
+;; in gfm-mode
+;; | markdown-insert-gfm-code-block or ```       | C-c C-s C            |
+
+;; inside code block, it will be in ESS[R] mode!
+
+;; | move to next R code chunk                   | M-n C-p/n            | polymode-next/previous-chunk                        |
+;; | move to next code chunk fo same type        | M-n M-C-p/n          | polymode-next/previous-chunk-same-type              |
+;; | kill the current chunk                      | M-n M-k              | polymode-kill-chunk                                 |
+;; | narrow buffer only current chunk            | M-n C-t              | polymode-toggle-chunk-narrowing                     |
+
+;; | evaluate code chunks at point/region        | M-n v                | polymode-eval-region-or-chunk                       |
+;; | evaluate all code chunks in buffer          | M-n b                | polymode-eval-buffer                                |
+;; | evaluate to point or to end                 | M-n u/d <up>/<down>  | polymode-eval-buffer-from-beg-to-point/point-to-end |
+
+;; | export markdown                             | M-n e                | polymode-export                                     |
+;; | switch output format                        | C-u M-n e            |                                                     |
+
+;; | export using weaver                         | M-n w                |                                                     | 
+;; markdown and markdown-ess - later remains active - you can check values etc.
+
+;; for in-line plots
+;; use org-mode instead!
+#+end_src
+
+* Org-Bullets Config
+
+#+begin_src emacs-lisp
+(use-package org-bullets
+  :ensure t
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+end_src
+
+* Org-Babel Config
+
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)
+   (R . t)
+   (julia . t)
+   (lisp . t)
+   (clojure . t)))
+#+end_src
+
+* Better Autosave and Backups
+
+#+begin_src emacs-lisp
+(setq auto-save-default t)          ;; enable autosave
+(setq auto-save-timeout 20)         ;; seconds idle before autosave
+(setq auto-save-interval 200)       ;; keystrokes before autosave
+(setq backup-directory-alist
+      `((".*" . ,(expand-file-name "~/.emacs.d/backups/"))))
+(setq backup-by-copying t)         ;; don't clobber symlinks
+(setq delete-old-versions t)
+(setq kept-new-versions 6)
+(setq kept-old-versions 2)
+(setq version-control t)           ;; use version numbers for backups
+#+end_src
+
+* OS Detection
+
+#+begin_src emacs-lisp
+(defconst *is-a-mac* (eq system-type 'darwin))
+(defconst *is-linux* (eq system-type 'gnu/linux))
+(defconst *is-windows* (memq system-type '(cygwin windows-nt ms-dos)))
+#+end_src
+
+#+begin_src emacs-lisp
+(when *is-a-mac*
+  (setq mac-command-modifier 'meta))
+#+end_src
+
+* Safe Package Loading
+
+#+begin_src emacs-lisp
+(when (require 'some-package nil 'noerror)
+  (some-package-mode 1))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package magit
+  :if (executable-find "git")
+  :config (message "Magit ready to go!"))
+#+end_src
+
+* Handle Errors Gracefully
+
+#+begin_src emacs-lisp
+(condition-case err
+    (do-something-risky)
+  (error (message "Startup warning: %s" err)))
+#+end_src
+
+* Version Guards
+
+#+begin_src emacs-lisp
+(when (version<= "28.0" emacs-version)
+  (message "We are modern enough to use new goodies!"))
+#+end_src
+
+* GUI Detection
+
+#+begin_src emacs-lisp
+(when (display-graphic-p)
+  (load-theme 'doom-tomorrow-day t))
+#+end_src
+
+* Custom File Setup
+
+#+begin_src emacs-lisp
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(when (file-exists-p custom-file)
+  (load custom-file))
+#+end_src
+
+* Debugging Output
+
+#+begin_src emacs-lisp
+(message "OS: %s" system-type)
+(message "Emacs version: %s" emacs-version)
+(message "Graphical? %s" (display-graphic-p))
 #+end_src

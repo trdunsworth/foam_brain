@@ -1,0 +1,1176 @@
+#+TITLE: Emacs Configuration for Data Science
+#+AUTHOR: Tony Dunsworth
+#+EMAIL: tony.dunsworth@gmail.com
+#+PROPERTY: header-args :results silent
+#+STARTUP: overview
+
+* Introduction
+
+This is a literate Emacs configuration optimized for data science work with Python, R, Julia, Jupyter, SQL, JavaScript/TypeScript, Markdown, and Quarto. It includes support for local LLM agents via Ollama and GitHub Copilot.
+
+** Philosophy
+- Keep configuration organized and documented
+- Use modern packages and best practices
+- Optimize for data science workflows
+- Enable easy customization
+- Favor simplicity over complexity
+
+* Performance & Startup
+
+#+begin_src emacs-lisp
+;; Better defaults
+(setq-default
+ delete-by-moving-to-trash t           ; Move deleted files to trash
+ window-combination-resize t           ; Resize windows proportionally
+ x-stretch-cursor t)                   ; Stretch cursor to glyph width
+
+;; Show line numbers in programming modes
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+
+;; Highlight current line
+(global-hl-line-mode 1)
+
+;; Show matching parentheses
+(show-paren-mode 1)
+(setq show-paren-delay 0)
+
+;; Better scrolling
+(setq scroll-margin 3
+      scroll-conservatively 100000
+      scroll-preserve-screen-position 1)
+
+;; Tab behavior
+(setq-default tab-width 4
+              indent-tabs-mode nil)  ; Use spaces instead of tabs
+
+;; UTF-8 everywhere
+(set-default-coding-systems 'utf-8)
+(prefer-coding-system 'utf-8)
+#+end_src
+
+* System Detection
+
+#+begin_src emacs-lisp
+;; Detect operating system
+(defconst *is-a-mac* (eq system-type 'darwin))
+(defconst *is-linux* (eq system-type 'gnu/linux))
+(defconst *is-windows* (memq system-type '(cygwin windows-nt ms-dos)))
+
+;; Mac-specific settings
+(when *is-a-mac*
+  (setq mac-command-modifier 'meta)
+  (setq mac-option-modifier 'super)
+  (setq ns-use-proxy-icon nil)
+  (setq frame-title-format nil))
+
+;; Display system info
+(message "Running on: %s | Emacs %s" system-type emacs-version)
+#+end_src
+
+* Theme & Appearance
+
+#+begin_src emacs-lisp
+;; Install and configure doom-themes
+(use-package doom-themes
+  :config
+  ;; Global settings
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  
+  ;; Load the theme (switch between these as needed)
+  (load-theme 'doom-one t)              ; Dark theme
+  ;; (load-theme 'doom-tomorrow-day t)  ; Light theme
+  ;; (load-theme 'doom-nord t)          ; Nord theme
+  
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  
+  ;; Corrects org-mode fontification
+  (doom-themes-org-config))
+
+;; Modern mode-line
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 25
+        doom-modeline-bar-width 3
+        doom-modeline-icon t
+        doom-modeline-major-mode-icon t
+        doom-modeline-buffer-file-name-style 'truncate-upto-project))
+
+;; Icons (all-the-icons for older Emacs, nerd-icons for newer)
+(use-package all-the-icons
+  :if (display-graphic-p))
+
+(use-package nerd-icons
+  :if (and (display-graphic-p) (>= emacs-major-version 28)))
+
+;; Font configuration (customize to your preference)
+(when (display-graphic-p)
+  (set-face-attribute 'default nil
+                      :family "JetBrains Mono"  ; or "Fira Code", "Source Code Pro", "Consolas"
+                      :height 140)              ; 14pt font
+  (set-face-attribute 'variable-pitch nil
+                      :family "SF Pro Display"  ; or "Arial", "Helvetica"
+                      :height 140))
+#+end_src
+
+* File Management & Backups
+
+#+begin_src emacs-lisp
+;; Better autosave and backups
+(setq auto-save-default t
+      auto-save-timeout 20           ; seconds idle before autosave
+      auto-save-interval 200         ; keystrokes before autosave
+      make-backup-files t
+      backup-by-copying t            ; don't clobber symlinks
+      delete-old-versions t
+      kept-new-versions 6
+      kept-old-versions 2
+      version-control t)             ; use version numbers for backups
+
+;; Put backups in dedicated directory
+(setq backup-directory-alist
+      `((".*" . ,(expand-file-name "backups/" user-emacs-directory))))
+
+;; Auto-save files in dedicated directory
+(setq auto-save-file-name-transforms
+      `((".*" ,(expand-file-name "auto-save/" user-emacs-directory) t)))
+
+;; Remember recent files
+(use-package recentf
+  :config
+  (setq recentf-max-saved-items 100
+        recentf-max-menu-items 15
+        recentf-auto-cleanup 'never)
+  (recentf-mode 1))
+
+;; Save place in files
+(use-package saveplace
+  :config
+  (save-place-mode 1))
+
+;; Save minibuffer history
+(savehist-mode 1)
+#+end_src
+
+* Completion & Navigation
+
+#+begin_src emacs-lisp
+;; Choose your completion framework: Ivy (classic) OR Vertico (modern)
+;; Comment out one of these sections based on your preference
+
+;; OPTION 1: Ivy/Counsel (Classic, battle-tested)
+(use-package ivy
+  :diminish
+  :config
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t
+        ivy-count-format "(%d/%d) "
+        ivy-wrap t))
+
+(use-package counsel
+  :after ivy
+  :diminish
+  :config
+  (counsel-mode 1))
+
+(use-package swiper
+  :after ivy
+  :bind (("C-s" . swiper)
+         ("C-r" . swiper-backward)))
+
+;; OPTION 2: Vertico/Consult (Modern, recommended for new users)
+;; Uncomment this section and comment out Ivy section above to use Vertico
+;;
+;; (use-package vertico
+;;   :init
+;;   (vertico-mode)
+;;   :config
+;;   (setq vertico-cycle t))
+;;
+;; (use-package orderless
+;;   :custom
+;;   (completion-styles '(orderless basic))
+;;   (completion-category-overrides '((file (styles basic partial-completion)))))
+;;
+;; (use-package marginalia
+;;   :init
+;;   (marginalia-mode))
+;;
+;; (use-package consult
+;;   :bind (("C-s" . consult-line)
+;;          ("C-x b" . consult-buffer)
+;;          ("M-g g" . consult-goto-line)
+;;          ("M-g i" . consult-imenu)
+;;          ("M-s r" . consult-ripgrep)))
+
+;; Which-key - shows available keybindings
+(use-package which-key
+  :diminish which-key-mode
+  :config
+  (which-key-mode)
+  (setq which-key-idle-delay 0.3))
+
+;; Company - text completion
+(use-package company
+  :diminish company-mode
+  :hook (after-init . global-company-mode)
+  :config
+  (setq company-idle-delay 0.2
+        company-minimum-prefix-length 2
+        company-show-numbers t
+        company-tooltip-align-annotations t
+        company-tooltip-limit 12)
+  :bind (:map company-active-map
+              ("C-n" . company-select-next)
+              ("C-p" . company-select-previous)
+              ("M-<" . company-select-first)
+              ("M->" . company-select-last)))
+
+;; Company box - prettier completion popups
+(use-package company-box
+  :if (display-graphic-p)
+  :hook (company-mode . company-box-mode))
+#+end_src
+
+* Version Control (Git)
+
+#+begin_src emacs-lisp
+;; Magit - the best Git interface
+(use-package magit
+  :if (executable-find "git")
+  :bind (("C-x g" . magit-status)
+         ("C-x M-g" . magit-dispatch)
+         ("C-c g" . magit-file-dispatch))
+  :config
+  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+
+;; Show git changes in the gutter
+(use-package diff-hl
+  :hook ((prog-mode . diff-hl-mode)
+         (dired-mode . diff-hl-dired-mode)
+         (magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh)))
+
+;; Git time machine - browse historical versions
+(use-package git-timemachine
+  :bind ("C-x v t" . git-timemachine))
+#+end_src
+
+* Programming - General
+
+#+begin_src emacs-lisp
+;; Tree-sitter for better syntax highlighting (Emacs 29+)
+(when (>= emacs-major-version 29)
+  (setq treesit-language-source-alist
+        '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+          (c "https://github.com/tree-sitter/tree-sitter-c")
+          (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+          (css "https://github.com/tree-sitter/tree-sitter-css")
+          (html "https://github.com/tree-sitter/tree-sitter-html")
+          (javascript "https://github.com/tree-sitter/tree-sitter-javascript")
+          (json "https://github.com/tree-sitter/tree-sitter-json")
+          (julia "https://github.com/tree-sitter/tree-sitter-julia")
+          (python "https://github.com/tree-sitter/tree-sitter-python")
+          (r "https://github.com/r-lib/tree-sitter-r")
+          (rust "https://github.com/tree-sitter/tree-sitter-rust")
+          (sql "https://github.com/derekstride/tree-sitter-sql")
+          (toml "https://github.com/tree-sitter/tree-sitter-toml")
+          (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+          (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+          (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+  
+  ;; Auto-install grammars if not present (comment out if you prefer manual control)
+  (dolist (lang (mapcar #'car treesit-language-source-alist))
+    (unless (treesit-language-available-p lang)
+      (message "Installing tree-sitter grammar for %s" lang)
+      ;; Uncomment the line below to auto-install:
+      ;; (treesit-install-language-grammar lang)
+      )))
+
+;; Eglot - LSP client (built-in for Emacs 29+)
+(use-package eglot
+  :ensure nil  ; Built-in for Emacs 29+
+  :hook ((python-mode . eglot-ensure)
+         (python-ts-mode . eglot-ensure)
+         (js-mode . eglot-ensure)
+         (js-ts-mode . eglot-ensure)
+         (typescript-mode . eglot-ensure)
+         (typescript-ts-mode . eglot-ensure)
+         (julia-mode . eglot-ensure))
+  :config
+  (setq eglot-autoshutdown t)  ; Shutdown server when last buffer is killed
+  (setq eglot-sync-connect 1)  ; Wait 1 second for server to start
+  
+  ;; Performance optimizations
+  (fset #'jsonrpc--log-event #'ignore)  ; Disable logging for performance
+  
+  ;; Custom LSP server configurations
+  (add-to-list 'eglot-server-programs
+               '(julia-mode . ("julia" "--startup-file=no" "--history-file=no" 
+                               "-e" "using LanguageServer; runserver()")))
+  
+  ;; Optionally use pyright instead of pylsp
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(python-mode . ("pyright-langserver" "--stdio")))
+  )
+
+;; Flycheck - on-the-fly syntax checking
+(use-package flycheck
+  :hook (prog-mode . flycheck-mode)
+  :config
+  (setq flycheck-check-syntax-automatically '(save mode-enabled)))
+
+;; Rainbow delimiters - colorful parentheses
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
+;; Highlight TODO/FIXME/NOTE keywords
+(use-package hl-todo
+  :hook (prog-mode . hl-todo-mode)
+  :config
+  (setq hl-todo-keyword-faces
+        '(("TODO"   . "#FF0000")
+          ("FIXME"  . "#FF0000")
+          ("DEBUG"  . "#A020F0")
+          ("NOTE"   . "#1E90FF")
+          ("HACK"   . "#FF8C00")
+          ("REVIEW" . "#FFD700")
+          ("XXX"    . "#FF0000"))))
+
+;; Smartparens - intelligent parentheses
+(use-package smartparens
+  :hook (prog-mode . smartparens-mode)
+  :config
+  (require 'smartparens-config))
+
+;; Aggressive indent - auto-indent code
+(use-package aggressive-indent
+  :hook ((emacs-lisp-mode . aggressive-indent-mode)
+         (lisp-mode . aggressive-indent-mode)))
+#+end_src
+
+* Programming - Python
+
+#+begin_src emacs-lisp
+;; Python mode with tree-sitter (Emacs 29+)
+(use-package python
+  :ensure nil
+  :mode ("\\.py\\'" . python-ts-mode)
+  :interpreter ("python" . python-ts-mode)
+  :config
+  ;; Use IPython if available
+  (when (executable-find "ipython")
+    (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args "-i --simple-prompt --InteractiveShell.display_page=True"))
+  
+  ;; Use Python 3 by default
+  (setq python-shell-interpreter "python3")
+  
+  ;; Better indentation
+  (setq python-indent-guess-indent-offset-verbose nil))
+
+;; Virtual environment management
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1)
+  
+  ;; Set default virtualenv directory
+  (setenv "WORKON_HOME" (expand-file-name "~/.virtualenvs"))
+  
+  ;; Display virtual env in mode line
+  (setq pyvenv-mode-line-indicator
+        '(pyvenv-virtual-env-name (" [venv:" pyvenv-virtual-env-name "] ")))
+  
+  ;; Automatically activate virtualenv in projects
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (let ((venv-path (locate-dominating-file default-directory ".venv")))
+                (when venv-path
+                  (pyvenv-activate (concat venv-path ".venv")))))))
+
+;; Poetry support
+(use-package poetry
+  :hook (python-mode . poetry-tracking-mode))
+
+;; Black formatter integration
+(use-package python-black
+  :after python
+  :hook (python-mode . python-black-on-save-mode-enable-dwim))
+
+;; Python testing support
+(use-package python-pytest
+  :after python
+  :bind (:map python-mode-map
+              ("C-c t t" . python-pytest-dispatch)
+              ("C-c t f" . python-pytest-file)
+              ("C-c t d" . python-pytest-function)))
+
+;; IPython Notebook integration
+(use-package ein
+  :commands (ein:run ein:login)
+  :config
+  (setq ein:output-area-inlined-images t
+        ein:slice-image t))
+
+;; Code Cells - Jupyter-style code execution in Python files
+(use-package code-cells
+  :hook (python-mode . code-cells-mode)
+  :config
+  (let ((map code-cells-mode-map))
+    (define-key map (kbd "M-p") 'code-cells-backward-cell)
+    (define-key map (kbd "M-n") 'code-cells-forward-cell)
+    (define-key map (kbd "C-c C-c") 'code-cells-eval)
+    (define-key map (kbd "C-c C-b") 'code-cells-eval-above)))
+#+end_src
+
+* Programming - R
+
+#+begin_src emacs-lisp
+;; ESS - Emacs Speaks Statistics
+(use-package ess
+  :mode (("\\.R\\'" . r-mode)
+         ("\\.r\\'" . r-mode))
+  :init
+  ;; Load ESS site
+  (require 'ess-site nil t)
+  :config
+  ;; Don't ask for working directory
+  (setq ess-ask-for-ess-directory nil)
+  
+  ;; Use company for completion
+  (setq ess-use-company t)
+  
+  ;; Disable smart assignment (allows _ to type underscore)
+  (setq ess-smart-S-assign-key nil)
+  (ess-toggle-underscore nil)
+  
+  ;; Don't show evaluation in console (for performance)
+  (setq ess-eval-visibly nil)
+  
+  ;; Use flymake instead of flycheck if available
+  (setq ess-use-flymake nil)
+  
+  ;; Display help in current window
+  (setq ess-help-own-frame nil)
+  
+  ;; Syntax highlighting for %>% pipe
+  (setq ess-style 'RStudio)
+  
+  ;; Auto-start R in script mode
+  (setq ess-startup-directory 'default-directory)
+  
+  :bind (:map ess-mode-map
+              ("C-c C-z" . ess-switch-to-inferior-or-script-buffer)
+              ("_" . ess-insert-assign)
+              ("C-c C-v" . ess-view-data-print))
+  :bind (:map inferior-ess-mode-map
+              ("_" . ess-insert-assign)))
+
+;; Polymode for R Markdown
+(use-package poly-R
+  :after (ess markdown-mode)
+  :config
+  (add-to-list 'auto-mode-alist '("\\.Rmd\\'" . poly-markdown+r-mode))
+  (add-to-list 'auto-mode-alist '("\\.rmd\\'" . poly-markdown+r-mode)))
+
+;; Better R object browser
+(use-package ess-view-data
+  :after ess
+  :bind (:map ess-mode-map
+              ("C-c v" . ess-view-data-print)))
+#+end_src
+
+* Programming - Julia
+
+#+begin_src emacs-lisp
+;; Julia mode
+(use-package julia-mode
+  :mode "\\.jl\\'"
+  :interpreter "julia")
+
+;; Julia REPL integration - choose one of these options:
+
+;; OPTION 1: julia-repl (simpler, lighter weight)
+(use-package julia-repl
+  :after julia-mode
+  :hook (julia-mode . julia-repl-mode)
+  :config
+  (setq julia-repl-executable-records
+        '((default "julia")))
+  :bind (:map julia-repl-mode-map
+              ("C-c C-z" . julia-repl-switch-to-repl)))
+
+;; OPTION 2: julia-snail (more advanced, requires Revise.jl)
+;; Uncomment this section and comment out julia-repl above to use julia-snail
+;;
+;; (use-package julia-snail
+;;   :after julia-mode
+;;   :hook (julia-mode . julia-snail-mode)
+;;   :config
+;;   ;; Requires: julia> using Pkg; Pkg.add("Revise")
+;;   (setq julia-snail-terminal-type :eat))
+
+;; Julia formatter
+(use-package julia-formatter
+  :after julia-mode
+  :bind (:map julia-mode-map
+              ("C-c C-f" . julia-format-buffer)))
+#+end_src
+
+* Programming - JavaScript & TypeScript
+
+#+begin_src emacs-lisp
+;; JavaScript/TypeScript mode with tree-sitter
+(use-package js
+  :ensure nil
+  :mode (("\\.js\\'" . js-ts-mode)
+         ("\\.jsx\\'" . js-ts-mode)
+         ("\\.mjs\\'" . js-ts-mode))
+  :config
+  (setq js-indent-level 2))
+
+(use-package typescript-mode
+  :mode (("\\.ts\\'" . typescript-ts-mode)
+         ("\\.tsx\\'" . tsx-ts-mode))
+  :config
+  (setq typescript-indent-level 2))
+
+;; Node.js REPL
+(use-package nodejs-repl
+  :bind (:map js-mode-map
+              ("C-c C-z" . nodejs-repl-switch-to-repl)
+              ("C-c C-l" . nodejs-repl-send-buffer)
+              ("C-c C-r" . nodejs-repl-send-region)))
+
+;; Prettier for formatting
+(use-package prettier-js
+  :hook ((js-mode . prettier-js-mode)
+         (typescript-mode . prettier-js-mode)
+         (js-ts-mode . prettier-js-mode)
+         (typescript-ts-mode . prettier-js-mode)))
+#+end_src
+
+* Programming - SQL
+
+#+begin_src emacs-lisp
+;; SQL mode improvements
+(use-package sql
+  :ensure nil
+  :mode ("\\.sql\\'" . sql-mode)
+  :config
+  ;; Default SQL product (change to your preference)
+  (setq sql-product 'postgres)
+  
+  ;; SQL connection configurations for research databases
+  (setq sql-connection-alist
+        '((prod-db (sql-product 'postgres)
+                   (sql-user "research_admin")
+                   (sql-server "localhost")
+                   (sql-database "research_data")
+                   (sql-port 5432))
+          (dev-db  (sql-product 'sqlite)
+                   (sql-database "~/research/data/test.db"))))
+  
+  ;; Helper function to connect to predefined databases
+  (defun my-sql-connect (connection)
+    "Connect to a predefined SQL database."
+    (interactive
+     (list (intern (completing-read "Connection: " 
+                                     (mapcar (lambda (x) (symbol-name (car x))) 
+                                            sql-connection-alist)))))
+    (sql-connect connection))
+  
+  ;; Capitalize keywords on save
+  (add-hook 'sql-mode-hook 'sqlup-mode))
+
+;; SQL keyword capitalization
+(use-package sqlup-mode
+  :hook (sql-mode . sqlup-mode))
+
+;; SQL indentation
+(use-package sql-indent
+  :hook (sql-mode . sqlind-minor-mode))
+
+;; SQLite integration (Emacs 29+)
+(use-package sqlite-mode-extras
+  :if (>= emacs-major-version 29)
+  :bind (:map sqlite-mode-map
+              ("n" . next-line)
+              ("p" . previous-line)
+              ("b" . sqlite-mode-extras-backtab-dwim)
+              ("f" . sqlite-mode-extras-tab-dwim)
+              ("+" . sqlite-mode-extras-add-row)
+              ("D" . sqlite-mode-extras-delete-row-dwim)
+              ("C" . sqlite-mode-extras-compose-and-execute)
+              ("E" . sqlite-mode-extras-execute)
+              ("S" . sqlite-mode-extras-sort-rows)
+              ("RET" . sqlite-mode-extras-ret-dwim)))
+#+end_src
+
+* Markdown & Quarto
+
+#+begin_src emacs-lisp
+;; Markdown mode
+(use-package markdown-mode
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :config
+  (setq markdown-command "multimarkdown")
+  (setq markdown-asymmetric-header t)
+  (setq markdown-code-block-braces t)
+  
+  ;; Preview markdown files with grip if available
+  (when (executable-find "grip")
+    (setq markdown-command "grip --export -")))
+
+;; Quarto mode for .qmd files
+(use-package quarto-mode
+  :mode (("\\.qmd\\'" . quarto-mode))
+  :config
+  (setq quarto-render-on-save nil)
+  
+  ;; Keybindings for Quarto
+  :bind (:map quarto-mode-map
+              ("C-c C-c" . quarto-preview)
+              ("C-c C-r" . quarto-render)))
+#+end_src
+
+* Org Mode Configuration
+
+#+begin_src emacs-lisp
+;; Org mode - the heart of Emacs
+(use-package org
+  :ensure nil  ; Built-in
+  :mode ("\\.org\\'" . org-mode)
+  :config
+  ;; Directory for org files
+  (setq org-directory (expand-file-name "~/org/"))
+  (setq org-default-notes-file (concat org-directory "notes.org"))
+  
+  ;; Better appearance
+  (setq org-startup-indented t
+        org-startup-folded 'content
+        org-hide-emphasis-markers t
+        org-pretty-entities t
+        org-src-fontify-natively t
+        org-src-tab-acts-natively t
+        org-edit-src-content-indentation 0
+        org-src-preserve-indentation t
+        org-hide-leading-stars t)
+  
+  ;; TODO keywords
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "IN-PROGRESS(i)" "WAITING(w)" "|" "DONE(d)" "CANCELLED(c)")))
+  
+  ;; Tags
+  (setq org-tag-alist '(("@work" . ?w) ("@home" . ?h) ("@research" . ?r)))
+  
+  ;; Org capture templates
+  (setq org-capture-templates
+        '(("t" "Task" entry (file+headline "" "Tasks")
+           "* TODO %?\n  %i\n  %a")
+          ("n" "Note" entry (file+headline "" "Notes")
+           "* %?\n  %i\n  %a")
+          ("j" "Journal" entry (file+datetree "journal.org")
+           "* %?\nEntered on %U\n  %i")
+          ("r" "Research Idea" entry (file+headline "research.org" "Ideas")
+           "* %?\n  %i\n  %a\n  %t")))
+  
+  ;; Agenda files
+  (setq org-agenda-files (list org-directory))
+  
+  ;; Keybindings
+  :bind (("C-c l" . org-store-link)
+         ("C-c a" . org-agenda)
+         ("C-c c" . org-capture)))
+
+;; Org bullets - prettier bullets
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode)
+  :config
+  (setq org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+;; Org modern - modern appearance
+(use-package org-modern
+  :hook (org-mode . org-modern-mode)
+  :config
+  (setq org-modern-star '("◉" "○" "✸" "✿" "✤" "✜" "◆" "▶")
+        org-modern-table-vertical 1
+        org-modern-table-horizontal 0.2
+        org-modern-list '((43 . "➤") (45 . "–") (42 . "•"))))
+
+;; Org Babel - execute code in org mode
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (python . t)
+   (jupyter . t)  ; Jupyter notebooks
+   (R . t)
+   (julia . t)
+   (sql . t)
+   (shell . t)
+   (js . t)))
+
+;; Don't ask for confirmation before evaluating code
+(setq org-confirm-babel-evaluate nil)
+
+;; Show images inline
+(setq org-startup-with-inline-images t)
+(setq org-image-actual-width '(600))  ; Set max width for inline images
+
+;; Better LaTeX preview
+(setq org-preview-latex-default-process 'dvipng)
+(setq org-format-latex-options 
+      (plist-put org-format-latex-options :scale 1.5))
+
+;; Org export settings
+(setq org-export-with-toc t
+      org-export-headline-levels 4
+      org-export-with-sub-superscripts '{}
+      org-export-with-smart-quotes t)
+#+end_src
+
+* Jupyter & IPython Integration
+
+#+begin_src emacs-lisp
+;; Jupyter support (requires emacs-jupyter package)
+(use-package jupyter
+  :after org
+  :config
+  ;; Configure Jupyter kernels for org-babel
+  (setq org-babel-default-header-args:jupyter-python 
+        '((:async . "yes")
+          (:session . "py")
+          (:kernel . "python3")))
+  
+  (setq org-babel-default-header-args:jupyter-R
+        '((:async . "yes")
+          (:session . "R")
+          (:kernel . "ir")))
+  
+  (setq org-babel-default-header-args:jupyter-julia
+        '((:async . "yes")
+          (:session . "jl")
+          (:kernel . "julia-1.10"))))
+
+;; EIN - Emacs IPython Notebook (alternative to jupyter package)
+;; Uncomment if you prefer EIN over jupyter package
+;;
+;; (use-package ein
+;;   :commands (ein:run ein:login)
+;;   :config
+;;   (setq ein:output-area-inlined-images t)
+;;   (setq ein:slice-image t))
+#+end_src
+
+* AI Coding Assistants
+
+#+begin_src emacs-lisp
+;; GitHub Copilot
+;; Note: Requires manual installation from github.com/copilot-emacs/copilot.el
+;; Also requires Node.js to be installed
+(use-package copilot
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . copilot-accept-completion)
+              ("TAB" . copilot-accept-completion)
+              ("C-<tab>" . copilot-accept-completion-by-word)
+              ("C-TAB" . copilot-accept-completion-by-word)
+              ("M-]" . copilot-next-completion)
+              ("M-[" . copilot-previous-completion))
+  :config
+  (setq copilot-indent-offset-warning-disable t)
+  
+  ;; Customize when copilot is disabled
+  (add-to-list 'copilot-disable-predicates
+               (lambda () (string-match-p ".*\\.org$" (buffer-name)))))
+
+;; GPTel - Ollama and other LLM integration
+(use-package gptel
+  :config
+  ;; Default to org-mode for better formatting
+  (setq gptel-default-mode 'org-mode)
+  
+  ;; Configure for Ollama (local LLMs)
+  (setq gptel-model "llama3.2:3b"  ; or "codellama", "mistral", etc.
+        gptel-backend
+        (gptel-make-ollama "Ollama"
+          :host "localhost:11434"
+          :stream t
+          :models '("llama3.2:3b" "codellama:13b" "mistral" "deepseek-coder")))
+  
+  ;; Optionally configure OpenAI/Claude if you have API keys
+  ;; (setq gptel-api-key "your-api-key-here")
+  
+  :bind (("C-c C-g" . gptel)
+         ("C-c g s" . gptel-send)
+         ("C-c g r" . gptel-rewrite-and-replace)
+         ("C-c g m" . gptel-menu)))
+
+;; Ellama - Advanced Ollama integration (alternative to GPTel)
+;; Uncomment if you prefer Ellama over GPTel
+;;
+;; (use-package ellama
+;;   :init
+;;   (setopt ellama-language "English")
+;;   (require 'llm-ollama)
+;;   (setopt ellama-provider
+;;           (make-llm-ollama
+;;            :chat-model "codellama:13b"
+;;            :embedding-model "nomic-embed-text"))
+;;   
+;;   :bind (("C-c e c" . ellama-chat)
+;;          ("C-c e a" . ellama-ask-about)
+;;          ("C-c e s" . ellama-ask-selection)
+;;          ("C-c e r" . ellama-rewrite)
+;;          ("C-c e k" . ellama-code-review)
+;;          ("C-c e e" . ellama-enhance-code)))
+#+end_src
+
+* Project Management
+
+#+begin_src emacs-lisp
+;; Projectile - project management
+(use-package projectile
+  :diminish projectile-mode
+  :config
+  (projectile-mode +1)
+  (setq projectile-completion-system 'default)
+  (setq projectile-enable-caching t)
+  (setq projectile-indexing-method 'alien)
+  (setq projectile-project-search-path '("~/projects/" "~/research/"))
+  :bind-keymap
+  ("C-c p" . projectile-command-map)
+  :bind (:map projectile-command-map
+              ("s r" . projectile-ripgrep)))
+
+;; Ripgrep integration
+(use-package rg
+  :if (executable-find "rg")
+  :config
+  (rg-enable-default-bindings))
+#+end_src
+
+* Terminal & Shell
+
+#+begin_src emacs-lisp
+;; Vterm - better terminal emulator (requires compilation)
+(use-package vterm
+  :if (and (>= emacs-major-version 28) (not *is-windows*))
+  :bind ("C-c t" . vterm)
+  :config
+  (setq vterm-max-scrollback 10000)
+  (setq vterm-kill-buffer-on-exit t))
+
+;; Multi-vterm for multiple terminals
+(use-package multi-vterm
+  :after vterm
+  :bind (("C-c T" . multi-vterm)
+         ("C-c M-t" . multi-vterm-project)
+         ("C-c M-n" . multi-vterm-next)
+         ("C-c M-p" . multi-vterm-prev)))
+
+;; Eat - alternative terminal (pure elisp, no compilation needed)
+;; Uncomment if you prefer eat or if vterm won't compile
+;;
+;; (use-package eat
+;;   :hook (eshell-load . eat-eshell-mode))
+#+end_src
+
+* Utilities & Productivity
+
+#+begin_src emacs-lisp
+;; Org-pomodoro for time management
+(use-package org-pomodoro
+  :after org
+  :bind ("<f12>" . org-pomodoro)
+  :config
+  (setq org-pomodoro-length 25
+        org-pomodoro-short-break-length 5
+        org-pomodoro-long-break-length 15
+        org-pomodoro-long-break-frequency 4))
+
+;; Helpful - better help buffers
+(use-package helpful
+  :bind (("C-h f" . helpful-callable)
+         ("C-h v" . helpful-variable)
+         ("C-h k" . helpful-key)
+         ("C-h x" . helpful-command)
+         ("C-c C-d" . helpful-at-point)))
+
+;; Expand region - expand selection semantically
+(use-package expand-region
+  :bind ("C-=" . er/expand-region))
+
+;; Multiple cursors
+(use-package multiple-cursors
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)))
+
+;; Avy - jump to any position
+(use-package avy
+  :bind (("C-:" . avy-goto-char)
+         ("C-'" . avy-goto-char-2)
+         ("M-g f" . avy-goto-line)
+         ("M-g w" . avy-goto-word-1)))
+
+;; Ace-window - better window switching
+(use-package ace-window
+  :bind ("M-o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+
+;; Undo-tree - better undo system
+(use-package undo-tree
+  :diminish undo-tree-mode
+  :config
+  (global-undo-tree-mode)
+  (setq undo-tree-visualizer-timestamps t)
+  (setq undo-tree-visualizer-diff t))
+
+;; Diminish - hide minor modes from modeline
+(use-package diminish)
+#+end_src
+
+* Research & Publishing Helpers
+
+#+begin_src emacs-lisp
+;; Quick function to stage, commit, and push research updates
+(defun my/publish-research-site ()
+  "Stage all changes, commit with a timestamp, and push to GitHub."
+  (interactive)
+  (when (magit-anything-staged-p)
+    (user-error "You have staged changes. Please commit or unstage them first."))
+  (magit-stage-modified)
+  (magit-commit-create (list "-m" (format "Research Update: %s" (current-time-string))))
+  (magit-push-current-to-upstream nil)
+  (message "Research pushed to GitHub!"))
+
+(global-set-key (kbd "C-c G p") 'my/publish-research-site)
+
+;; Quick function to export org file and open in browser
+(defun my/org-export-and-browse ()
+  "Export current org file to HTML and open in browser."
+  (interactive)
+  (org-html-export-to-html)
+  (browse-url-of-file (concat (file-name-sans-extension (buffer-file-name)) ".html")))
+
+(define-key org-mode-map (kbd "C-c C-e h b") 'my/org-export-and-browse)
+#+end_src
+
+* Custom Functions & Keybindings
+
+#+begin_src emacs-lisp
+;; Insert current date
+(defun insert-current-date ()
+  "Insert the current date in YYYY-MM-DD format."
+  (interactive)
+  (insert (format-time-string "%Y-%m-%d")))
+
+(global-set-key (kbd "C-c d") 'insert-current-date)
+
+;; Insert current timestamp
+(defun insert-current-timestamp ()
+  "Insert the current timestamp."
+  (interactive)
+  (insert (format-time-string "%Y-%m-%d %H:%M:%S")))
+
+(global-set-key (kbd "C-c D") 'insert-current-timestamp)
+
+;; Open config file quickly
+(defun open-config-file ()
+  "Open the main configuration file."
+  (interactive)
+  (find-file (expand-file-name "myinit.org" user-emacs-directory)))
+
+(global-set-key (kbd "C-c C-,") 'open-config-file)
+
+;; Reload configuration
+(defun reload-config ()
+  "Reload the Emacs configuration."
+  (interactive)
+  (org-babel-load-file (expand-file-name "myinit.org" user-emacs-directory))
+  (message "Configuration reloaded!"))
+
+(global-set-key (kbd "C-c C-.") 'reload-config)
+
+;; Kill all buffers except current
+(defun kill-other-buffers ()
+  "Kill all buffers except the current one."
+  (interactive)
+  (mapc 'kill-buffer (delq (current-buffer) (buffer-list)))
+  (message "Killed all other buffers"))
+
+(global-set-key (kbd "C-c K") 'kill-other-buffers)
+
+;; Insert code block for org-mode
+(defun insert-org-code-block (language)
+  "Insert an org-mode code block for LANGUAGE."
+  (interactive "sLanguage: ")
+  (insert (format "#+begin_src %s\n\n#+end_src" language))
+  (forward-line -1))
+
+(define-key org-mode-map (kbd "C-c i c") 'insert-org-code-block)
+
+;; Toggle between light and dark theme
+(defun toggle-theme ()
+  "Toggle between light and dark theme."
+  (interactive)
+  (if (eq (car custom-enabled-themes) 'doom-one)
+      (progn
+        (disable-theme 'doom-one)
+        (load-theme 'doom-tomorrow-day t)
+        (message "Switched to light theme"))
+    (progn
+      (disable-theme 'doom-tomorrow-day)
+      (load-theme 'doom-one t)
+      (message "Switched to dark theme"))))
+
+(global-set-key (kbd "C-c T T") 'toggle-theme)
+
+;; Create new scratch buffer
+(defun create-scratch-buffer ()
+  "Create a new scratch buffer."
+  (interactive)
+  (switch-to-buffer (generate-new-buffer "*scratch*"))
+  (lisp-interaction-mode))
+
+(global-set-key (kbd "C-c b s") 'create-scratch-buffer)
+#+end_src
+
+* Performance Monitoring & Debugging
+
+#+begin_src emacs-lisp
+;; Show startup time
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "*** Emacs loaded in %s seconds with %d garbage collections."
+                     (emacs-init-time "%.2f")
+                     gcs-done)))
+
+;; Benchmark startup (optional - uncomment to enable)
+;; (use-package benchmark-init
+;;   :config
+;;   ;; To disable collection of benchmark data after init is done.
+;;   (add-hook 'after-init-hook 'benchmark-init/deactivate))
+
+;; Profiler helpers
+(defun profile-startup ()
+  "Profile Emacs startup."
+  (interactive)
+  (require 'profiler)
+  (profiler-start 'cpu)
+  (load-file user-init-file)
+  (profiler-report)
+  (profiler-stop))
+#+end_src
+
+* Final Customizations & Notes
+
+#+begin_src emacs-lisp
+;; Warn about large files
+(setq large-file-warning-threshold 50000000)  ; 50MB
+
+;; Enable some disabled commands
+(put 'narrow-to-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
+
+;; Remember cursor position
+(setq save-place-file (expand-file-name "saveplace" user-emacs-directory))
+
+;; Better buffer names for duplicate filenames
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'forward)
+
+;; Smooth scrolling
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1)))
+(setq mouse-wheel-progressive-speed nil)
+(setq mouse-wheel-follow-mouse 't)
+
+;; Desktop save mode - restore session
+;; Uncomment to enable automatic session saving
+;; (desktop-save-mode 1)
+#+end_src
+
+* Final Notes & Next Steps
+
+This configuration is designed to grow with you. Key next steps:
+
+** 1. Install Language Servers
+For the best LSP experience, install these language servers:
+
+- Python: =pip install python-lsp-server= or =npm install -g pyright=
+- R: =install.packages("languageserver")= in R
+- Julia: =using Pkg; Pkg.add("LanguageServer")= in Julia
+- JavaScript/TypeScript: =npm install -g typescript typescript-language-server=
+- SQL: =npm install -g sql-language-server= (optional)
+
+** 2. Configure Virtual Environments
+Set up your Python virtual environments:
+
+#+begin_src sh
+export WORKON_HOME=~/.virtualenvs
+python -m venv ~/.virtualenvs/data-science
+#+end_src
+
+Activate in Emacs with =M-x pyvenv-workon=
+
+** 3. Set Up Ollama for Local LLMs
+Download from https://ollama.ai and pull models:
+
+#+begin_src sh
+ollama pull llama3.2:3b
+ollama pull codellama:13b
+ollama pull mistral
+#+end_src
+
+** 4. GitHub Copilot Setup
+If using Copilot, ensure Node.js is installed, then:
+
+#+begin_src sh
+M-x copilot-login
+#+end_src
+
+** 5. Install Tree-Sitter Grammars (Emacs 29+)
+If auto-install is disabled, manually install with:
+
+#+begin_src emacs-lisp
+M-x treesit-install-language-grammar
+#+end_src
+
+** 6. Customize Keybindings
+All keybindings can be customized. Look for =:bind= sections in the config.
+
+** 7. Choose Your Completion Framework
+The config includes both Ivy and Vertico. Choose one and comment out the other
+in the "Completion & Navigation" section.
+
+** 8. Set Up Jupyter
+For Jupyter integration in org-mode:
+
+#+begin_src sh
+pip install jupyter
+M-x jupyter-run-server-repl
+#+end_src
+
+** 9. Database Connections
+Update the SQL connection settings in the SQL section with your actual database
+credentials and connection strings.
+
+** Useful Resources
+- [[https://orgmode.org/manual/][Org Mode Manual]]
+- [[https://magit.vc/manual/][Magit Manual]]
+- [[https://ess.r-project.org/][ESS Documentation]]
+- [[https://www.gnu.org/software/emacs/manual/][Emacs Manual]]
+
+Remember: This is YOUR configuration. Modify, experiment, and make it work for you!
+Use =C-c C-,= to quickly open this file and =C-c C-.= to reload after changes.
+
+Happy coding! 🚀
