@@ -197,3 +197,11 @@ profile.to_file("report.html")
 # display report in notebook
 from IPython.display import IFrame
 IFrame(src='test.html', width='100%', height='1000')
+
+# Correlation Analyses
+# Compute correlation matrix
+correlation_matrix = df.corr()
+
+# Visualize correlation matrix
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.show()
