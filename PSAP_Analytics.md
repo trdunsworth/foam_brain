@@ -28,6 +28,9 @@ This leaves you a file structure that should be updated to look like this:
 .
 ├── .venv/
 |-- data/
+|   |-- raw/
+|   |-- clean/
+|   |-- output_files/
 ├── docs/
 │   ├── setup.md
 │   ├── usage.md
@@ -46,7 +49,7 @@ This leaves you a file structure that should be updated to look like this:
 After that is created, then I suggest adding in the libraries. Thankfully, that is relatively easy.
 
 ```bash
-uv add pandas polars numpy scipy scikit-learn arrow seaborn matplotlib statsmodels plotly duckdb timecopilot ruff ty SQLAlchemy mssql-python boltons
+uv add pandas polars numpy scipy scikit-learn arrow seaborn matplotlib statsmodels plotly duckdb timecopilot ruff ty pyodbc mssql-python boltons jupyter marimo streamlit
 
 uv lock
 ```
@@ -67,8 +70,46 @@ My choices can be explained below:
 - **timecopilot**: This is a zero-shot time forecasting library. For this project, this is going to be used to create some basic forecasts that can be embeded in reports.
 - **ruff**: This is a Python linter that was developed by the same people that created uv. Linting files is a good way to ensure that your code is well-written and more safe/secure.
 - **ty**: This library will help ensure type safety in the data. This will prevent issues by conversion with types.
-- **SQLAlchemy**: This is an ORM that can be used to draw data directly from a database and prepare it for use, programatically, in Python.
+- **pyodbc**: This is library that can be used to draw data directly from a database and prepare it for use, programatically, in Python.
 - **mssql-python**: This is a library and driver to access Microsoft SQL Server databases from Python.
 - **boltons**: This library has a lot of functions that are not in basic Python, but should have been.
+- **jupyter**: This is the standard notebook library for Python and very useful, especially Jupyter Lab for creating reproducible workflows. Notebooks are also good for experimentation.
+- **marimo**: This is a different notebook system. It promises to be more responsive and require less rerunning cells when values changed.
+- **streamlit**: This is a standard for building dashboards and interactive visualizations.
+  
+*I am interested seeing what [grplot](https://grplot.readthedocs.io/en/latest/) may do in this situation. The examples look fascinating.
 
-### Measurements
+### Ingestion and Cleaning
+
+There should be at least two datasets for any week. The first will come from the CAD and will be used to evaluate service call generation and how well the PSAP operates. The second will come from the phone handling system and will be used for volume forecasting and for standards complience with [NENA STA-020](https://cdn.ymaws.com/www.nena.org/resource/resmgr/standards/nena-sta-020.1-2020_911_call.pdf).
+
+SQLAlchemy may be invoked to attach to a database instance and execute a pre-defined query such as [[assets/eda_project/week_report_raw.sql]] to get the raw data. It should then deposit that csv file in the raw folder for the ingestion and cleaning process to begin.
+
+After the cleaning steps outlined here, the analytical datasets should be moved to the clean folder. Any other output such as outliers or other call lists can be output to the output_files folder for follow up.
+
+```python
+df_raw = pd_read_csv(./data/raw/week08_raw.csv)
+df_raw.head(10)
+df_raw.tail(10)
+# Get basic info
+# Get dataset shape
+print("Dataset shape:", df_raw.shape, "\n")
+
+# Display column names
+print("Column names:", df_raw.columns.tolist(), "\n")
+
+```
+
+This code will give us the general size and shape of the data prior to the cleaning process.
+
+#### Cleaning
+
+The first cleaning step would be to go through the file to find the number of missing rows. The code below is an example of how to accomplish that.
+
+```python
+# Count the number of missing values in each column
+missing_values_count = df_raw.isnull().sum()
+
+# Print the result
+print(missing_values_count)
+```
