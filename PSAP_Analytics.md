@@ -113,3 +113,7 @@ missing_values_count = df_raw.isnull().sum()
 # Print the result
 print(missing_values_count)
 ```
+
+Depending on where the missing data is located, we will need to adress it in some fashion. Because this is CAD data and reflects actual service calls, it is a bigger challenge to remove rows from the dataset. So different amelioration techniques must be investgated and applied. One option, for numeric variables, is to ignore the missing numeric values when calculating statistical metrics. For factors/strings, the missing values can be quantified as a percentage of overall values and reported as such.
+
+After addressing missing data, determining the number of data points that are outliers is another important step.
