@@ -2,7 +2,7 @@
 
 The goal of this is to collect some articles and notes about them in one place that I can use in the near future.I will also intersperse Mac links in here, but I will make it clear that they are Mac links.
 
-[Gas Town Article](https://steve-yegge.medium.com/welcome-to-gas-town-4f25ee16dd04) - This looks interesting. He may be right, I might not be ready for it, but I am understanding that I may need to do this in future to grow DMA as a development organization.
+[Gas Town Article](https://steve-yPegge.medium.com/welcome-to-gas-town-4f25ee16dd04) - This looks interesting. He may be right, I might not be ready for it, but I am understanding that I may need to do this in future to grow DMA as a development organization.
 [Gas Town Repo](https://github.com/gastownhall/gastown) - This is the GitHub repo for that.
 [Puppy CLI](https://github.com/datadog-labs/pup) This repo may be handy while learning how to build agents out.
 [Future Casing the Modern Data Stack](https://motherduck.com/blog/future-casting-the-modern-data-stack/) - Mother Duck on the data stack.
