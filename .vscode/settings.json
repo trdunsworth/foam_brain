@@ -22,5 +22,11 @@
     ".vscode/custom-tag-style.css"
   ],
   "workbench.settings.openDefaultKeybindings": true,
-  "r.lsp.promptToInstall": false
+  "r.lsp.promptToInstall": false,
+  "workbench.editorAssociations": {
+    "*.parquet": "duckdb.dataFileViewer",
+    "*.csv": "duckdb.dataFileViewer",
+    "*.tsv": "duckdb.dataFileViewer",
+    "*.xlsx": "duckdb.dataFileViewer"
+  }
 }
