@@ -18,3 +18,5 @@ foam_template:
 ## Links
 
 ## Other Work Notes
+
+### Blog Post Ideas
