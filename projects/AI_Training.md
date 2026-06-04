@@ -12,4 +12,8 @@
 
 ## Secondary Projects
 
+[600 Prompts for Data Science](https://aitoolsup.notion.site/600-ChatGPT-Prompts-for-Data-Science-34380d35ec87443b833edec3f505de31)
+
+Should really evaluate those.
+
 [agents]: agents.md "AGENTS.md"
